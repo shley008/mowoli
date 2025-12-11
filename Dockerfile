@@ -44,4 +44,6 @@ ENV MWL_DIR="${APP_HOME}/var/mwl" \
 EXPOSE 3000
 
 # Start the app with Puma
-CMD ["bundle", "exec", "puma", "--config", "config/puma.rb"]
+#CMD ["bundle", "exec", "puma", "--config", "config/puma.rb"]
+CMD ["bash", "-lc", "bundle exec rake db:migrate RAILS_ENV=${RAILS_ENV:-development} && bundle exec puma --config config/puma.rb"]
+

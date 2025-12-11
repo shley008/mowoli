@@ -1,10 +1,9 @@
----
-version: "3.8"
 services:
   web:
     build:
       context: .
-    image: bjoernalbers/mowoli
+      dockerfile: Dockerfile
+   # image: mowoli:2.0
     ports:
       - "80:3000"
     volumes:

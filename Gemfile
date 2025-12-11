@@ -4,10 +4,11 @@ source 'https://rubygems.org'
 ruby '2.6.10'
 
 # Core framework
-gem 'rails', '4.2.1'
+gem 'rails', '4.2.11.3'
 
 # Database
-gem 'sqlite3', '~> 1.4', platform: 'ruby'
+gem 'sqlite3', '~> 1.3.13'
+#, platform: 'ruby'
 
 # Asset pipeline
 gem 'sass-rails', '~> 5.0'
@@ -27,8 +28,11 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 gem 'puma', '~> 3.12'
 
 # JSON + HTML/XML parsing
-gem 'json', '~> 1.8', '>= 1.8.6'
+gem 'json'
 gem 'nokogiri', '~> 1.10'
+
+#native extension helper
+gem 'ffi', '~> 1.16.3'
 
 # Misc application gems
 # Use ActiveModel has_secure_password (uncomment if needed)
