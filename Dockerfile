@@ -1,23 +1,47 @@
-FROM ruby:2.0.0-p648
-RUN apt-get update \
-  && apt-get -y --no-install-recommends install nodejs \
-  && rm -rf /var/lib/apt/lists/*
-WORKDIR /opt/mowoli
+# Ruby version that works well with Rails 4.2 and the updated Gemfile
+FROM ruby:2.6.10
+
+# Install system dependencies for Rails, sqlite3, and native extensions
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      nodejs \
+      libsqlite3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# App directory
+ENV APP_HOME=/opt/mowoli
+WORKDIR $APP_HOME
+
+# Use a separate bundle path so gems are cached across builds
+ENV BUNDLE_PATH=/bundle \
+    BUNDLE_BIN=/bundle/bin \
+    GEM_HOME=/bundle \
+    PATH="/bundle/bin:${PATH}"
+
+# Bundler version compatible with this app
+RUN gem install bundler -v 1.17.3
+
+# Install gems (do this before copying the full app to leverage Docker cache)
 COPY Gemfile Gemfile.lock ./
-RUN bundle install
+RUN bundle _1.17.3_ install --jobs=4 --retry=3
+
+# Now copy the rest of the app
 COPY . .
+
+# Runtime directories (for DB, MWL, HL7 export)
 RUN mkdir -p var/mwl var/db var/hl7
-VOLUME /opt/mowoli/var/mwl /opt/mowoli/var/db /opt/mowoli/var/hl7
-# Export directory for the Modality Worklist (MWL).
-ENV MWL_DIR="/opt/mowoli/var/mwl"
-# Export directory for HL7 files:
-ENV HL7_EXPORT_DIR="/opt/mowoli/var/hl7"
-# Name of your hospital / office (max. 64 characters)
-ENV SCHEDULED_PERFORMING_PHYSICIANS_NAME="Simpson^Bart"
-# Identifier of the Assigning Authority (system, organization, agency, or
-# department) that issued the Patient ID.
-# This sets DICOM-Tag (0010,0021).
-ENV ISSUER_OF_PATIENT_ID="MOWOLI"
-ENV RAILS_ENV=development
+VOLUME ["${APP_HOME}/var/mwl", "${APP_HOME}/var/db", "${APP_HOME}/var/hl7"]
+
+# Environment variables used by the app
+ENV MWL_DIR="${APP_HOME}/var/mwl" \
+    HL7_EXPORT_DIR="${APP_HOME}/var/hl7" \
+    SCHEDULED_PERFORMING_PHYSICIANS_NAME="Simpson^Bart" \
+    ISSUER_OF_PATIENT_ID="MOWOLI" \
+    RAILS_ENV=development
+
+# Rails / Puma listens on 3000 by default
 EXPOSE 3000
-CMD ["bundle","exec","puma","--config","config/puma.rb"]
+
+# Start the app with Puma
+CMD ["bundle", "exec", "puma", "--config", "config/puma.rb"]
